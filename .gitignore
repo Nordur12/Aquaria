@@ -75,3 +75,4 @@ yarn-error.log
 supabase/functions/monitor-firebase/*.json
 supabase/functions/Notification/*.json
 supabase/functions/Secrets/*.json
+supabase/functions/monitor-firebase/*.json

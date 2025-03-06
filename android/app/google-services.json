@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "316811571786",
+    "firebase_url": "https://smartaquaria-9ad3b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "smartaquaria-9ad3b",
+    "storage_bucket": "smartaquaria-9ad3b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:316811571786:android:52a23687ae54a21b332cb3",
+        "android_client_info": {
+          "package_name": "com.aquaria"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkqD0q_2p0zCW0F9PlYs77XccNncHIU3U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

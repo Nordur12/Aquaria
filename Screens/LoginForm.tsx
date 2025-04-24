@@ -32,11 +32,11 @@ function LoginForm(props: any) {
   
   const handleLogin = async () => {
     if (!identifier.trim() && !password.trim()) {
-      Alert.alert('Please enter both username and password.');
+      Alert.alert('Please enter both email and password.');
       return;
     }
     if (!identifier.trim()) {
-      Alert.alert('Please enter your username or email.');
+      Alert.alert('Please enter your email.');
       return;
     }
     if (!password.trim()) {
@@ -70,9 +70,17 @@ function LoginForm(props: any) {
         const user = userCredential.user;
         if (user.emailVerified) {
           console.log('User logged in:', user);
-          props.navigation.navigate('Homescreen');
         } else {
           Alert.alert('Email not verified', 'Please verify your email before logging in.');
+          
+          try {
+            await user.sendEmailVerification(); // Ensure the function is async
+            console.log('Verification email sent');
+          } catch (error) {
+            console.error('Error sending verification email:', error);
+          }
+      
+          props.navigation.navigate('Verify Email');
         }
       }
     } catch (error: any) {
@@ -111,7 +119,7 @@ function LoginForm(props: any) {
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Username or Email"
+          placeholder="Email"
           placeholderTextColor="#696666"
           value={identifier}
           onChangeText={setIdentifier}
@@ -145,6 +153,10 @@ function LoginForm(props: any) {
 
         <TouchableOpacity onPress={() => props.navigation.navigate('Create Account')}>
           <Text style={styles.createAccountText}>Create Account</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => props.navigation.navigate('Wifi Setup')}>
+          <Text style={styles.createAccountText}>Setup WiFi</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

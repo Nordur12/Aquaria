@@ -56,12 +56,28 @@ export default function Home(props: any) {
   const [selectedAquarium, setSelectedAquarium] = useState<Aquarium | null>(null);
   const [newName, setNewName] = useState('');
   const [isSettingsVisible, setSettingsVisible] = useState(false);
-  const [isNotificationVisible, setNotificationVisible] = useState(false);
-  const [notifications, setNotifications] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const { currentUser } = auth();
   const isFocused = useIsFocused();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const currentUser = auth().currentUser; // Get the logged-in user
+
+    if (!currentUser) return; // Stop if no user is logged in
+
+    const unsubscribe = firestore()
+      .collection("users")
+      .doc(currentUser.uid) // Use currentUser.uid instead of user.uid
+      .collection("notifications")
+      .where('isRead', '==', false) // Fetch only unread notifications
+      .onSnapshot(snapshot => {
+        setUnreadCount(snapshot.size); // Update unread count
+      });
+
+    return () => unsubscribe(); // Clean up listener
+  }, []);
 
   useEffect(() => {
     if (!isFocused) {
@@ -73,7 +89,6 @@ export default function Home(props: any) {
   useEffect(() => {
     if (!isFocused) {
       setModalVisible(false);
-      setNotificationVisible(false);
     }
   }, [isFocused]);
 
@@ -88,8 +103,6 @@ export default function Home(props: any) {
       if (isModalVisible) {
         if (isSettingsVisible) {
           setSettingsVisible(false);
-        } else if (isNotificationVisible) {
-          setNotificationVisible(false);
         } else {
           setModalVisible(false);
         }
@@ -105,7 +118,7 @@ export default function Home(props: any) {
         backHandler.remove();
       }
     };
-  }, [isModalVisible, isSettingsVisible, isNotificationVisible]);
+  }, [isModalVisible, isSettingsVisible]);
   
 
   const fetchAquariums = async () => {
@@ -143,29 +156,27 @@ export default function Home(props: any) {
         }
       }
 
-      // Data listener
       aquariumsData.forEach(aquarium => {
         if (aquarium.deviceId) {
-          const deviceRef = database().ref(`devices/${aquarium.deviceId}/data`);
+          const deviceRef = database().ref(`devices/${aquarium.deviceId}`);
+      
+          // Turbidity
+deviceRef.child('turbidity').on('value', snapshot => {
+  if (snapshot.exists()) {
+    const newTurbidityCondition = snapshot.val().condition; // Get only the condition
+    setAquariums(prevAquariums =>
+      prevAquariums.map(aq =>
+        aq.id === aquarium.id
+          ? { ...aq, turbidity: newTurbidityCondition } // Only update turbidity condition
+          : aq
+      )
+    );
+  }
+});
 
-          // turbidity
-          deviceRef.child('turbidityData').on('value', snapshot => {
-            if (snapshot.exists()) {
-              const newturbidityData = snapshot.val();
-              setAquariums(prevAquariums =>
-                prevAquariums.map(aq =>
-                  aq.id === aquarium.id
-                    ? { ...aq, turbidity: `${newturbidityData.NTU.toFixed(2)} NTU` }
-                    : aq
-                )
-              );
-        }
-            
-        
-          });
-
-          // pH level
-          deviceRef.child('phlevel').on('value', snapshot => {
+      
+          // pH Level
+          deviceRef.child('ph').on('value', snapshot => {
             if (snapshot.exists()) {
               const phData = snapshot.val();
               setAquariums(prevAquariums =>
@@ -174,7 +185,21 @@ export default function Home(props: any) {
                     ? { ...aq, phLevel: `${phData.pHLevel.toFixed(2)}` }
                     : aq
                 )
-              ); 
+              );
+            }
+          });
+      
+          // Temperature
+          deviceRef.child('temperature').on('value', snapshot => {
+            if (snapshot.exists()) {
+              const tempData = snapshot.val();
+              setAquariums(prevAquariums =>
+                prevAquariums.map(aq =>
+                  aq.id === aquarium.id
+                    ? { ...aq, temperature: `${tempData.temperature}°C` }
+                    : aq
+                )
+              );
             }
           });
         }
@@ -292,9 +317,14 @@ export default function Home(props: any) {
           <Image source={require('../Assets/Images/setting.png')} style={styles.headerButton} />
         </TouchableOpacity>
         
-        <TouchableOpacity onPress={() => props.navigation.navigate("Notif")}>
-          <Image source={require('../Assets/Images/bell.png')} style={styles.headerButton} />
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => props.navigation.navigate("Notif")} style={{ position: 'relative' }}>
+        <Image source={require('../Assets/Images/bell.png')} style={styles.headerButton} />
+        {unreadCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{unreadCount}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -371,16 +401,11 @@ export default function Home(props: any) {
         style={styles.sideModal}
       >
         <View style={styles.sideModalContent}>
-          <TouchableOpacity style={styles.sideModalItem}>
-            <Image source={require('../Assets/Images/user.png')} style={styles.sideModalIcon} />
+          <TouchableOpacity style={styles.sideModalItem} onPress={() => props.navigation.navigate('Profile')} >
+            <Image source={require('../Assets/Images/user.png')} style={styles.sideModalIcon}/>
             <Text style={styles.sideModalText}>Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.sideModalItem} onPress={() => props.navigation.navigate('RegDev')}>
-            <Text style={styles.sideModalText}>Register Device</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sideModalItem} onPress={() => props.navigation.navigate('Wat')}>
-            <Text style={styles.sideModalText}>Water Change</Text>
-          </TouchableOpacity>
+          
           <TouchableOpacity style={styles.sideModalItem} onPress={handleLogout}>
             <Text style={styles.sideModalText}>Logout</Text>
           </TouchableOpacity>

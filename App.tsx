@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { Provider as PaperProvider } from "react-native-paper";
 import 'react-native-gesture-handler';
 
 import LoginForm from './Screens/LoginForm';
@@ -12,10 +13,10 @@ import CreateAccountForm from './Screens/CreateAccounForm';
 import Fpassword from './Screens/Fpassword';
 import EmailVerification from './Screens/EmailVerification';
 import AppNavigator from './Screens/NavBar/AppNavigator';
-import RegDevice from './Screens/RegDevice';
-import WaterCH from './Screens/WaterCH';
-import Home from './Screens/Home';
 import Notification from './Screens/Notification';
+import WifiSetup from './Screens/WifiSetup';
+import profile from './Screens/profile';
+import Home from './Screens/Home';
 
 // Request permission for notifications
 async function requestUserPermission() {
@@ -60,12 +61,12 @@ function App() {
 
   // Handle user state changes
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+    const unsubscribe = auth().onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
+        await currentUser.reload(); // Force refresh user state
         if (currentUser.emailVerified) {
-          setUser(currentUser); // Only set the user if email is verified
+          setUser(currentUser); // Set user only if email is verified
         } else {
-          // If email is not verified, navigate to Verify Email screen
           setUser(null);
         }
       } else {
@@ -74,7 +75,7 @@ function App() {
       if (initializing) setInitializing(false);
     });
   
-    return unsubscribe; // Cleanup on unmount
+    return unsubscribe;
   }, [initializing]);  
   
   // Request notification permission and handle FCM token
@@ -127,6 +128,7 @@ function App() {
   }
 
   return (
+    <PaperProvider> 
     <NavigationContainer>
       <Stack.Navigator>
         {user ? (
@@ -143,20 +145,14 @@ function App() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
-              name="RegDev"
-              component={RegDevice}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Wat"
-              component={WaterCH}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
               name="Notif"
               component={Notification}
               options={{ headerShown: false }}
-            />
+            /><Stack.Screen
+            name="Profile"
+            component={profile}
+            options={{ headerShown: false }}
+          />
           </>
         ) : (
           // Unauthenticated stack
@@ -181,10 +177,16 @@ function App() {
               component={EmailVerification}
               options={{ headerShown: false }}
             />
+            <Stack.Screen
+              name="Wifi Setup"
+              component={WifiSetup}
+              options={{ headerShown: false }}
+            />
           </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
+    </PaperProvider>
   );
 }
 
